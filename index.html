@@ -1,605 +1,225 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KhanaGo | Admin Dashboard</title>
-
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f4f6fa;
-  color:#202938;
-}
-header{
-  background:#172554;
-  color:white;
-  padding:18px 22px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:12px;
-}
-header h2{margin:0;color:#fbbf24}
-button{
-  border:0;
-  padding:11px 15px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
-  color:white;
-  background:#2563eb;
-}
-button:disabled{opacity:.5;cursor:not-allowed}
-.logout{background:#ef4444}
-.container{padding:20px;max-width:1200px;margin:auto}
-.stats{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:14px;
-  margin-bottom:22px;
-}
-.stat,.card,.login{
-  background:white;
-  padding:18px;
-  border-radius:12px;
-  box-shadow:0 2px 10px #0000000c;
-}
-.stat h2{margin:8px 0;color:#1d4ed8}
-.stat p{margin:0;color:#64748b}
-.card{margin-bottom:15px}
-.card h3{margin-top:0}
-.details{color:#64748b;line-height:1.8;overflow-wrap:anywhere}
-.status{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:20px;
-  background:#dbeafe;
-  color:#1d4ed8;
-  font-size:12px;
-  font-weight:bold;
-}
-.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:14px;
-}
-.actions button{background:#2563eb}
-.actions .green{background:#16a34a}
-.actions .orange{background:#ea580c}
-.actions .red{background:#dc2626}
-select,input{
-  padding:12px;
-  border:1px solid #d1d5db;
-  border-radius:8px;
-  width:100%;
-  margin:7px 0;
-}
-.login{max-width:380px;margin:70px auto}
-.login h2{text-align:center}
-.primary{
-  background:#2563eb;
-  color:white;
-  width:100%;
-  margin-top:10px;
-}
-#dashboard{display:none}
-#message{text-align:center;color:#dc2626}
-.empty{text-align:center;color:#64748b;padding:30px}
-.section-title{margin-top:30px}
-.order-card{border-left:4px solid #2563eb}
-.help-card{border-left:4px solid #16a34a}
-.small{font-size:13px;color:#64748b}
-@media(max-width:600px){
-  .container{padding:12px}
-  header{padding:15px}
-  .card,.stat{padding:14px}
-  .actions button{font-size:12px;padding:9px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KhanaGo Admin Dashboard</title>
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 40px; }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .container { max-width: 760px; margin: 20px auto; padding: 0 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: var(--muted); }
+    .field input, .field select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-outline {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 7px 12px;
+      font-size: 0.88rem;
+    }
+    .hidden { display: none; }
+    .msg { margin-top: 10px; font-size: 0.92rem; font-weight: 600; color: #dc2626; }
+    .order-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      background: #fafafa;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #166534;
+    }
+  </style>
 </head>
-
 <body>
+  <header>
+    <h1>🔒 KhanaGo Admin Dashboard</h1>
+  </header>
 
-<header>
-  <h2>🍔 KhanaGo Admin</h2>
-  <button class="logout" id="logoutBtn" style="display:none">
-    Logout
-  </button>
-</header>
-
-<!-- ADMIN LOGIN -->
-<div class="login" id="loginBox">
-  <h2>🔐 Admin Login</h2>
-
-  <input id="email" type="email" placeholder="Admin Email">
-  <input id="password" type="password" placeholder="Password">
-
-  <button class="primary" id="loginBtn">Login</button>
-  <p id="message"></p>
-</div>
-
-<!-- ADMIN DASHBOARD -->
-<div class="container" id="dashboard">
-
-  <h2>📊 Dashboard Overview</h2>
-  <p class="small" id="welcome"></p>
-
-  <div class="stats">
-    <div class="stat">
-      <p>Total Orders</p>
-      <h2 id="total">0</h2>
+  <div class="container">
+    <div id="loginBox" class="card">
+      <h2 style="margin-bottom:12px;">Admin Login</h2>
+      <div class="field">
+        <label>Admin Email</label>
+        <input type="email" id="adminEmail" value="kishangihar8@gmail.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="adminPass" placeholder="Enter admin password" />
+      </div>
+      <button class="btn" onclick="adminLogin()">Admin Login</button>
+      <div id="adminMsg" class="msg"></div>
     </div>
 
-    <div class="stat">
-      <p>Pending</p>
-      <h2 id="pending">0</h2>
-    </div>
+    <div id="dashboardContent" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2>Live Orders</h2>
+          <button class="btn-outline" onclick="adminLogout()">Logout</button>
+        </div>
+        <div id="ordersList">Loading orders...</div>
+      </div>
 
-    <div class="stat">
-      <p>Preparing</p>
-      <h2 id="preparing">0</h2>
-    </div>
-
-    <div class="stat">
-      <p>Completed</p>
-      <h2 id="delivered">0</h2>
-    </div>
-
-    <div class="stat">
-      <p>Total Sales</p>
-      <h2 id="sales">₹0</h2>
+      <div class="card">
+        <h2 style="margin-bottom:12px;">Customer Help Messages</h2>
+        <div id="helpsList">Loading messages...</div>
+      </div>
     </div>
   </div>
 
-  <h2 class="section-title">📦 Live Customer Orders</h2>
-  <div id="orders">
-    <div class="empty">Loading orders...</div>
-  </div>
-
-  <h2 class="section-title">💬 Customer Help Messages</h2>
-  <div id="messages">
-    <div class="empty">Loading messages...</div>
-  </div>
-
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script>
-
-// =====================================
-// 1. FIREBASE CONFIGURATION
-// =====================================
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCfoYb2nBRXAmWggHV-d77qEywaMXXHI7Y",
-  authDomain: "khanago-11584.firebaseapp.com",
-  projectId: "khanago-11584",
-  storageBucket: "khanago-11584.firebasestorage.app",
-  messagingSenderId: "472974685789",
-  appId: "1:472974685789:web:dc9affa20898ad2bf3ffb4",
-  measurementId: "G-6EH5CP0VXM"
-};
-
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-
-// =====================================
-// 2. ELEMENTS AND VARIABLES
-// =====================================
-
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
-const message = document.getElementById("message");
-const ordersBox = document.getElementById("orders");
-const messagesBox = document.getElementById("messages");
-
-let unsubscribeOrders = null;
-let unsubscribeMessages = null;
-let allOrders = [];
-
-const ORDER_STATUSES = [
-  "Order Placed",
-  "Preparing",
-  "Ready",
-  "Out for Delivery",
-  "Completed",
-  "Cancelled"
-];
-
-
-// =====================================
-// 3. ADMIN LOGIN
-// =====================================
-
-document.getElementById("loginBtn").onclick = async () => {
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const btn = document.getElementById("loginBtn");
-
-  if (!email || !password) {
-    message.textContent = "Email aur password bharo.";
-    return;
-  }
-
-  btn.disabled = true;
-  message.textContent = "Logging in...";
-
-  try {
-    await auth.signInWithEmailAndPassword(email,password);
-    message.textContent = "";
-
-  } catch(error) {
-    message.textContent = error.message;
-
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-
-// =====================================
-// 4. AUTHENTICATION CHECK
-// =====================================
-
-auth.onAuthStateChanged(user => {
-
-  if (user) {
-
-    loginBox.style.display = "none";
-    dashboard.style.display = "block";
-
-    document.getElementById("logoutBtn").style.display = "block";
-    document.getElementById("welcome").textContent =
-      "Welcome: " + user.email;
-
-    loadOrders();
-    loadMessages();
-
-  } else {
-
-    stopListeners();
-
-    loginBox.style.display = "block";
-    dashboard.style.display = "none";
-
-    document.getElementById("logoutBtn").style.display = "none";
-  }
-});
-
-
-// =====================================
-// 5. ADMIN LOGOUT
-// =====================================
-
-document.getElementById("logoutBtn").onclick = async () => {
-  try {
-    await auth.signOut();
-  } catch(error) {
-    alert("Logout failed: " + error.message);
-  }
-};
-
-
-// =====================================
-// 6. STOP FIREBASE LISTENERS
-// =====================================
-
-function stopListeners() {
-
-  if (unsubscribeOrders) {
-    unsubscribeOrders();
-    unsubscribeOrders = null;
-  }
-
-  if (unsubscribeMessages) {
-    unsubscribeMessages();
-    unsubscribeMessages = null;
-  }
-}
-
-
-// =====================================
-// 7. LOAD REAL-TIME CUSTOMER ORDERS
-// =====================================
-
-function loadOrders() {
-
-  if (unsubscribeOrders) unsubscribeOrders();
-
-  ordersBox.textContent = "Loading orders...";
-
-  unsubscribeOrders = db.collection("orders")
-    .onSnapshot(snapshot => {
-
-      allOrders = snapshot.docs.map(doc => ({
-        id:doc.id,
-        ...doc.data()
-      }));
-
-      allOrders.sort((a,b) => {
-        const ta = a.createdAt?.toMillis?.() || 0;
-        const tb = b.createdAt?.toMillis?.() || 0;
-        return tb - ta;
-      });
-
-      renderOrders();
-
-    },error => {
-
-      ordersBox.textContent =
-        "Orders load nahi hue: " + error.message;
-
-    });
-}
-
-
-// =====================================
-// 8. DASHBOARD COUNTS
-// =====================================
-
-function renderOrders() {
-
-  const pending = allOrders.filter(o =>
-    !o.status ||
-    o.status === "New" ||
-    o.status === "Order Placed"
-  ).length;
-
-  const preparing = allOrders.filter(o =>
-    o.status === "Preparing"
-  ).length;
-
-  const completed = allOrders.filter(o =>
-    o.status === "Completed" ||
-    o.status === "Delivered"
-  ).length;
-
-  const sales = allOrders
-    .filter(o => o.status !== "Cancelled" && o.status !== "Rejected")
-    .reduce((sum,o) => sum + Number(o.total || 0),0);
-
-  document.getElementById("total").textContent = allOrders.length;
-  document.getElementById("pending").textContent = pending;
-  document.getElementById("preparing").textContent = preparing;
-  document.getElementById("delivered").textContent = completed;
-  document.getElementById("sales").textContent = "₹" + sales;
-
-  ordersBox.replaceChildren();
-
-  if (!allOrders.length) {
-    ordersBox.innerHTML =
-      '<div class="empty">Abhi koi order nahi hai.</div>';
-    return;
-  }
-
-  allOrders.forEach(order => {
-
-    const card = document.createElement("div");
-    card.className = "card order-card";
-
-    const title = document.createElement("h3");
-    title.textContent = "Order #" + order.id;
-    card.appendChild(title);
-
-    const currentStatus = ORDER_STATUSES.includes(order.status)
-      ? order.status
-      : "Order Placed";
-
-    const statusBadge = document.createElement("span");
-    statusBadge.className = "status";
-    statusBadge.textContent = currentStatus;
-    card.appendChild(statusBadge);
-
-    const details = document.createElement("div");
-    details.className = "details";
-
-    function addDetail(label,value) {
-      const line = document.createElement("div");
-      const bold = document.createElement("b");
-      bold.textContent = label + ": ";
-      line.append(bold,document.createTextNode(String(value ?? "N/A")));
-      details.appendChild(line);
-    }
-
-    addDetail("Customer",order.name || order.customerName);
-    addDetail("Phone",order.phone);
-    addDetail("Address",order.address);
-    addDetail("Total","₹" + Number(order.total || 0));
-
-    if (order.payment || order.paymentMethod) {
-      addDetail("Payment",order.payment || order.paymentMethod);
-    }
-
-    card.appendChild(details);
-
-    const itemHeading = document.createElement("h4");
-    itemHeading.textContent = "Ordered Items";
-    card.appendChild(itemHeading);
-
-    const items = Array.isArray(order.items) ? order.items : [];
-
-    if (items.length) {
-      items.forEach(item => {
-        const line = document.createElement("p");
-        const quantity = Number(item.quantity ?? item.qty ?? 1);
-        line.textContent =
-          `${item.name || "Item"} × ${quantity} — ₹${Number(item.price || 0) * quantity}`;
-        card.appendChild(line);
-      });
-    } else {
-      card.appendChild(document.createTextNode("Item details unavailable"));
-    }
-
-    // STATUS SELECTOR
-    const label = document.createElement("p");
-    label.textContent = "Update Order Status:";
-    card.appendChild(label);
-
-    const select = document.createElement("select");
-    select.setAttribute("aria-label","Order status");
-
-    ORDER_STATUSES.forEach(status => {
-      const option = document.createElement("option");
-      option.value = status;
-      option.textContent = status;
-      select.appendChild(option);
-    });
-
-    select.value = currentStatus;
-
-    select.addEventListener("change",async () => {
-      await setStatus(order.id,select.value,select);
-    });
-
-    card.appendChild(select);
-
-    // WHATSAPP CUSTOMER CONTACT
-    const cleanPhone = String(order.phone || "").replace(/\D/g,"");
-
-    if (/^[6-9]\d{9}$/.test(cleanPhone)) {
-      const wa = document.createElement("a");
-      wa.textContent = "Contact Customer on WhatsApp";
-      wa.className = "btn";
-      wa.style.background = "#16a34a";
-      wa.style.textDecoration = "none";
-      wa.style.display = "inline-block";
-      wa.style.marginTop = "12px";
-      wa.href = "https://wa.me/91" + cleanPhone;
-      wa.target = "_blank";
-      wa.rel = "noopener";
-      card.appendChild(wa);
-    }
-
-    ordersBox.appendChild(card);
-  });
-}
-
-
-// =====================================
-// 9. ONE-TAP FIRESTORE STATUS UPDATE
-// =====================================
-
-async function setStatus(orderId,selectedStatus,select) {
-
-  if (!auth.currentUser) {
-    alert("Please login again.");
-    return;
-  }
-
-  if (!ORDER_STATUSES.includes(selectedStatus)) {
-    alert("Invalid status.");
-    return;
-  }
-
-  select.disabled = true;
-
-  try {
-
-    await db.collection("orders").doc(orderId).update({
-      status:selectedStatus,
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-  } catch(error) {
-
-    alert("Status update failed: " + error.message);
-
-  } finally {
-
-    select.disabled = false;
-  }
-}
-
-
-// =====================================
-// 10. LOAD CUSTOMER HELP MESSAGES
-// =====================================
-
-function loadMessages() {
-
-  if (unsubscribeMessages) unsubscribeMessages();
-
-  messagesBox.textContent = "Loading messages...";
-
-  unsubscribeMessages = db.collection("helpMessages")
-    .onSnapshot(snapshot => {
-
-      messagesBox.replaceChildren();
-
-      const docs = snapshot.docs.slice().sort((a,b) => {
-        const ta = a.data().createdAt?.toMillis?.() || 0;
-        const tb = b.data().createdAt?.toMillis?.() || 0;
-        return tb - ta;
-      });
-
-      if (!docs.length) {
-        messagesBox.innerHTML =
-          '<div class="empty">Abhi koi help message nahi hai.</div>';
-        return;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, onSnapshot, query, orderBy, updateDoc, doc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfoYb2nBRXAmWggHV-d77qEywaMXXHI7Y",
+      authDomain: "khanago-11584.firebaseapp.com",
+      projectId: "khanago-11584",
+      storageBucket: "khanago-11584.firebasestorage.app",
+      messagingSenderId: "472974685789",
+      appId: "1:472974685789:web:dc9affa20898ad2bf3ffb4",
+      measurementId: "G-6EH5CP0VXM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let unsubOrders = null;
+    let unsubHelps = null;
+
+    window.adminLogin = async () => {
+      const email = document.getElementById("adminEmail").value.trim();
+      const pass = document.getElementById("adminPass").value;
+      const msgEl = document.getElementById("adminMsg");
+      msgEl.textContent = "";
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        msgEl.textContent = "Login failed: " + err.message;
       }
+    };
 
-      docs.forEach(doc => {
+    window.adminLogout = async () => {
+      await signOut(auth);
+    };
 
-        const m = doc.data();
+    window.changeOrderStatus = async (orderId, newStatus) => {
+      await updateDoc(doc(db, "orders", orderId), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+    };
 
-        const card = document.createElement("div");
-        card.className = "card help-card";
+    onAuthStateChanged(auth, (user) => {
+      const loginBox = document.getElementById("loginBox");
+      const dash = document.getElementById("dashboardContent");
+      if (user) {
+        loginBox.classList.add("hidden");
+        dash.classList.remove("hidden");
+        startListeners();
+      } else {
+        loginBox.classList.remove("hidden");
+        dash.classList.add("hidden");
+        if (unsubOrders) unsubOrders();
+        if (unsubHelps) unsubHelps();
+      }
+    });
 
-        const name = document.createElement("h3");
-        name.textContent = m.name || "Customer";
-
-        const phone = document.createElement("p");
-        phone.textContent = "Phone: " + (m.phone || "N/A");
-
-        const msg = document.createElement("p");
-        msg.textContent = "Message: " + (m.message || "");
-
-        card.append(name,phone,msg);
-
-        const cleanPhone = String(m.phone || "").replace(/\D/g,"");
-
-        if (/^[6-9]\d{9}$/.test(cleanPhone)) {
-
-          const wa = document.createElement("a");
-          wa.textContent = "Reply on WhatsApp";
-          wa.className = "btn";
-          wa.style.background = "#16a34a";
-          wa.style.textDecoration = "none";
-          wa.href = "https://wa.me/91" + cleanPhone;
-          wa.target = "_blank";
-          wa.rel = "noopener";
-
-          card.appendChild(wa);
+    function startListeners() {
+      const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+      unsubOrders = onSnapshot(qOrders, (snap) => {
+        const el = document.getElementById("ordersList");
+        if (snap.empty) {
+          el.textContent = "No orders yet.";
+          return;
         }
-
-        messagesBox.appendChild(card);
+        el.innerHTML = snap.docs.map(d => {
+          const o = d.data();
+          const itemsStr = (o.items || []).map(i => `${i.name} x${i.qty}`).join(", ");
+          const statuses = ["Order Placed","Preparing","Ready","Out for Delivery","Completed","Cancelled"];
+          const opts = statuses.map(s => `<option value="${s}" ${o.status === s ? "selected" : ""}>${s}</option>`).join("");
+          return `
+            <div class="order-box">
+              <div><strong>${o.name}</strong> (${o.phone}) — <span class="badge">${o.status}</span></div>
+              <div><small>Shop: ${o.shop || "N/A"} | Address: ${o.address}</small></div>
+              <div><small>Items: ${itemsStr} | Total: ₹${o.total}</small></div>
+              <div style="margin-top:8px;">
+                <select onchange="changeOrderStatus('${d.id}', this.value)">${opts}</select>
+              </div>
+            </div>
+          `;
+        }).join("");
       });
 
-    },error => {
-
-      messagesBox.textContent =
-        "Messages load nahi hue: " + error.message;
-
-    });
-}
-
-</script>
-
+      const qHelps = query(collection(db, "helpMessages"), orderBy("createdAt", "desc"));
+      unsubHelps = onSnapshot(qHelps, (snap) => {
+        const el = document.getElementById("helpsList");
+        if (snap.empty) {
+          el.textContent = "No help messages yet.";
+          return;
+        }
+        el.innerHTML = snap.docs.map(d => {
+          const h = d.data();
+          return `
+            <div class="order-box">
+              <div><strong>${h.name}</strong> (${h.phone})</div>
+              <div style="margin-top:4px;">${h.message}</div>
+            </div>
+          `;
+        }).join("");
+      });
+    }
+  </script>
 </body>
 </html>
