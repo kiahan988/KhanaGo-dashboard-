@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KhanaGo | Admin Dashboard</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,sans-serif;
+ background:#f4f6fa;color:#202938
+}
+header{
+ background:#172554;color:white;padding:18px 22px;
+ display:flex;justify-content:space-between;
+ align-items:center;flex-wrap:wrap;gap:12px
+}
+header h2{margin:0;color:#fbbf24}
+button{
+ border:0;padding:11px 15px;border-radius:8px;
+ cursor:pointer;font-weight:bold
+}
+.logout{background:#ef4444;color:white}
+.container{padding:20px;max-width:1200px;margin:auto}
+.stats{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ gap:14px;margin-bottom:22px
+}
+.stat,.card,.login{
+ background:white;padding:18px;border-radius:12px;
+ box-shadow:0 2px 10px #0000000c
+}
+.stat h2{margin:8px 0;color:#1d4ed8}
+.stat p{margin:0;color:#64748b}
+.card{margin-bottom:15px}
+.card h3{margin-top:0}
+.details{color:#64748b;line-height:1.7}
+.status{
+ display:inline-block;padding:6px 10px;border-radius:20px;
+ background:#dbeafe;color:#1d4ed8;font-size:12px;
+ font-weight:bold
+}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.actions button{background:#2563eb;color:white}
+.actions .green{background:#16a34a}
+.actions .orange{background:#ea580c}
+select,input{
+ padding:12px;border:1px solid #d1d5db;
+ border-radius:8px;width:100%;margin:7px 0
+}
+.login{max-width:380px;margin:70px auto}
+.login h2{text-align:center}
+.primary{
+ background:#2563eb;color:white;width:100%;margin-top:10px
+}
+#dashboard{display:none}
+#message{text-align:center;color:#dc2626}
+.empty{text-align:center;color:#64748b;padding:30px}
+@media(max-width:600px){
+ .container{padding:12px}
+ header{padding:15px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <h2>🍔 KhanaGo Admin</h2>
+ <button class="logout" id="logoutBtn" style="display:none">Logout</button>
+</header>
+
+<div class="login" id="loginBox">
+ <h2>Admin Login</h2>
+ <input id="email" type="email" placeholder="Admin Email">
+ <input id="password" type="password" placeholder="Password">
+ <button class="primary" id="loginBtn">Login</button>
+ <p id="message"></p>
+</div>
+
+<div class="container" id="dashboard">
+
+ <h2>Dashboard Overview</h2>
+
+ <div class="stats">
+  <div class="stat"><p>Total Orders</p><h2 id="total">0</h2></div>
+  <div class="stat"><p>Pending</p><h2 id="pending">0</h2></div>
+  <div class="stat"><p>Preparing</p><h2 id="preparing">0</h2></div>
+  <div class="stat"><p>Delivered</p><h2 id="delivered">0</h2></div>
+ </div>
+
+ <h2>Live Customer Orders</h2>
+ <div id="orders">
+  <div class="empty">Loading orders...</div>
+ </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+
+// 1. APNA FIREBASE CONFIG YAHA PASTE KARO
+const firebaseConfig = {
+ apiKey: "YOUR_API_KEY",
+ authDomain: "YOUR_PROJECT.firebaseapp.com",
+ projectId: "YOUR_PROJECT_ID",
+ storageBucket: "YOUR_PROJECT.appspot.com",
+ messagingSenderId: "YOUR_SENDER_ID",
+ appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
+const ordersBox = document.getElementById("orders");
+
+let unsubscribeOrders = null;
+let allOrders = [];
+
+// 2. LOGIN
+document.getElementById("loginBtn").onclick = async () => {
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ if(!email || !password){
+  message.textContent = "Email aur password bharo";
+  return;
+ }
+
+ try{
+  message.textContent = "Logging in...";
+  await auth.signInWithEmailAndPassword(email,password);
+ }catch(error){
+  message.textContent = error.message;
+ }
+};
+
+// 3. AUTH CHECK
+auth.onAuthStateChanged(user => {
+ if(user){
+  loginBox.style.display = "none";
+  dashboard.style.display = "block";
+  document.getElementById("logoutBtn").style.display = "block";
+  loadOrders();
+ }else{
+  if(unsubscribeOrders) unsubscribeOrders();
+  loginBox.style.display = "block";
+  dashboard.style.display = "none";
+  document.getElementById("logoutBtn").style.display = "none";
+ }
+});
+
+document.getElementById("logoutBtn").onclick = () => auth.signOut();
+
+// 4. LOAD LIVE ORDERS
+function loadOrders(){
+ if(unsubscribeOrders) unsubscribeOrders();
+
+ unsubscribeOrders = db.collection("orders")
+ .onSnapshot(snapshot => {
+  allOrders = snapshot.docs.map(doc => ({
+   id:doc.id,
+   ...doc.data()
+  }));
+
+  renderOrders();
+ }, error => {
+  ordersBox.innerHTML =
+   '<p class="empty">Orders load nahi hue: '+escapeHTML(error.message)+'</p>';
+ });
+}
+
+// 5. DASHBOARD COUNTS
+function renderOrders(){
+ document.getElementById("total").textContent = allOrders.length;
+ document.getElementById("pending").textContent =
+  allOrders.filter(o => ["Order Placed","Order Received"].includes(o.status)).length;
+ document.getElementById("preparing").textContent =
+  allOrders.filter(o => o.status === "Preparing").length;
+ document.getElementById("delivered").textContent =
+  allOrders.filter(o => o.status === "Delivered").length;
+
+ if(allOrders.length === 0){
+  ordersBox.innerHTML = '<div class="empty">Abhi koi order nahi hai</div>';
+  return;
+ }
+
+ ordersBox.innerHTML = allOrders.map(o => {
+  const items = Array.isArray(o.items) ? o.items : [];
+  const itemHTML = items.map(item =>
+   `<div>${escapeHTML(item.name || "Item")} × ${Number(item.qty ?? item.quantity ?? 1)}</div>`
+  ).join("");
+
+  const name = o.name || o.customerName || "Customer";
+  const phone = o.phone || "";
+  const address = o.address || "";
+  const shop = o.shop || o.shopName || "KhanaGo Shop";
+  const total = Number(o.total || 0);
+  const status = o.status || "Order Placed";
+  const payment = o.payment || o.paymentMethod || "Not specified";
+
+  return `
+  <div class="card">
+   <h3>Order #${escapeHTML(o.id)}</h3>
+   <span class="status">${escapeHTML(status)}</span>
+
+   <div class="details">
+    <b>Customer:</b> ${escapeHTML(name)}<br>
+    <b>Phone:</b> ${escapeHTML(phone)}<br>
+    <b>Address:</b> ${escapeHTML(address)}<br>
+    <b>Shop:</b> ${escapeHTML(shop)}<br>
+    <b>Payment:</b> ${escapeHTML(payment)}<br>
+    <b>Total:</b> ₹${total.toFixed(2)}
+   </div>
+
+   <h4>Order Items</h4>
+   ${itemHTML || "Items details not available"}
+
+   <div class="actions">
+    <button class="green" onclick="setStatus('${o.id}','Order Placed')">Order Placed</button>
+    <button onclick="setStatus('${o.id}','Preparing')">Preparing</button>
+    <button onclick="setStatus('${o.id}','Ready')">Ready</button>
+    <button class="orange" onclick="setStatus('${o.id}','Picked Up')">Picked Up</button>
+    <button class="green" onclick="setStatus('${o.id}','Delivered')">Delivered</button>
+    <button class="orange" onclick="setStatus('${o.id}','Rejected')">Rejected</button>
+   </div>
+  </div>`;
+ }).join("");
+}
+
+// HTML text safe display
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g, char => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ }[char]));
+}
+
+// 6. ONE-TAP FIRESTORE STATUS UPDATE
+async function setStatus(orderId, selectedStatus){
+ if(!orderId) return alert("Order ID missing!");
+
+ try{
+  await db.collection("orders").doc(orderId).update({
+   status:selectedStatus,
+   updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  alert("Status updated: "+selectedStatus);
+ }catch(error){
+  console.error(error);
+  alert("Update failed: "+error.message);
+ }
+}
+
+</script>
+</body>
+</html>
